@@ -12,6 +12,6 @@ WORKDIR /root/
 
 RUN apk --no-cache add ca-certificates
 
-COPY --from=builder /app/main .
+COPY --from=builder /app/main /bin/postgres-s3-backup
 
-CMD ["./main"]
+CMD ["/bin/postgres-s3-backup"]
