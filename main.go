@@ -46,6 +46,9 @@ func main() {
 	}
 
 	for {
+		log.Printf("Sleeping for %s", *every)
+		time.Sleep(*every)
+
 		file := newFileName(*postgresDB)
 		err = RunDump(&connectionOptions{
 			Host:     *postgresHost,
@@ -56,21 +59,23 @@ func main() {
 		}, file)
 		if err != nil {
 			log.Printf("WARNING: Failed to dump database: %s", err)
+			continue
 		}
 
 		log.Printf("Uploading %s to %s", file, *s3Bucket)
 
 		if _, err := s3.FPutObject(context.Background(), *s3Bucket, file, file, minio.PutObjectOptions{}); err != nil {
 			log.Printf("WARNING: Failed to upload %s to %s: %s", file, *s3Bucket, err)
+			continue
 		}
 
 		log.Printf("Removing %s", file)
 		if err := os.Remove(file); err != nil {
 			log.Printf("WARNING: Failed to remove %s: %s", file, err)
+			continue
 		}
 
-		log.Printf("Sleeping for %s", *every)
-		time.Sleep(*every)
+		log.Printf("Done")
 	}
 }
 
