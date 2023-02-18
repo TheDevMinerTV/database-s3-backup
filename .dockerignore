@@ -1,4 +1,5 @@
 /.github
+/.git
 
 .env
 .env.dist
