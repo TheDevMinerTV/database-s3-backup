@@ -1,0 +1,8 @@
+/.github
+
+.env
+.env.dist
+
+.gitignore
+.dockerignore
+Dockerfile
