@@ -1,12 +1,9 @@
-name: Build and publish Docker image
+name: Release Docker image
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 0 * * 0"
-  push:
-    branches:
-      - master
+  release:
+     types: ["published"]
 
 env:
   REGISTRY: ghcr.io
@@ -45,11 +42,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set release version
+        run: echo "RELEASE=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
           push: true
-          tags: ${{ env.FQDN }}:latest
+          tags: "${{ env.FQDN }}:latest,${{ env.FQDN }}:${{ env.RELEASE }}"
           platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/i386,linux/arm/v6
           labels: |
             cache-from: type=local,src=/tmp/.buildx-cache
