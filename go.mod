@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/joho/godotenv v1.5.1
-	github.com/minio/minio-go/v7 v7.0.62
+	github.com/minio/minio-go/v7 v7.0.63
 )
 
 require (
