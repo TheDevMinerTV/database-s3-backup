@@ -56,13 +56,13 @@ services:
 1. Build the Docker image:
 
    ```sh
-   docker-compose build
+   docker compose build
    ```
 
 2. Start the application:
 
    ```sh
-   docker-compose up -d
+   docker compose up -d
    ```
 
 This will start the application in the background. It will automatically perform backups based on the configured interval and upload them to the specified S3 bucket.
@@ -72,7 +72,7 @@ This will start the application in the background. It will automatically perform
 To monitor the application's activity and view logs:
 
 ```sh
-docker-compose logs -f
+docker compose logs -f
 ```
 
 This command will follow the log output of the container. Press `Ctrl+C` to exit log following.
@@ -82,6 +82,6 @@ This command will follow the log output of the container. Press `Ctrl+C` to exit
 If you need to update the configuration, modify the `.env` file or the `docker-compose.yml` as necessary and restart the service:
 
 ```sh
-docker-compose down
-docker-compose up -d
+docker compose down
+docker compose up -d
 ```
