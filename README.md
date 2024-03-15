@@ -47,11 +47,13 @@ services:
       S3_ACCESS_KEY: "your_s3_access_key"
       S3_SECRET_KEY: "your_s3_secret_key"
       INTERVAL: "24h"
-    volumes:
-      - .:/app
 ```
 
 ## Running the Application with Docker
+
+There is an image available on `ghcr.io/thedevminertv/postgres_s3_backup` that you can use.
+
+Alternatively, you can build the image yourself:
 
 1. Build the Docker image:
 
