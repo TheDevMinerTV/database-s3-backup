@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"time"
 )
 
@@ -15,6 +16,7 @@ type connectionOptions struct {
 	Database string
 	Username string
 	Password string
+	DbType   string
 }
 
 var (
@@ -22,26 +24,48 @@ var (
 	pgDumpStdOpts       = []string{"--no-owner", "--no-acl", "--clean", "--blobs", "-v"}
 	pgDumpDefaultFormat = "c"
 
-	ErrPgDumpNotFound = errors.New("pg_dump not found")
+	ErrPgDumpNotFound    = errors.New("pg_dump not found")
+	ErrMySqlDumpNotFound = errors.New("mysqldump not found")
 )
 
-func RunDump(pg *connectionOptions, outFile string) error {
-	if !commandExist(PGDumpCmd) {
-		return ErrPgDumpNotFound
+func RunDump(connectionOpts *connectionOptions, outFile string) error {
+	var cmd *exec.Cmd
+
+	if connectionOpts.DbType == "postgres" {
+		if !commandExist(PGDumpCmd) {
+			return ErrPgDumpNotFound
+		}
+
+		options := append(
+			pgDumpStdOpts,
+			fmt.Sprintf(`-f%s`, outFile),
+			fmt.Sprintf(`--dbname=%v`, connectionOpts.Database),
+			fmt.Sprintf(`--host=%v`, connectionOpts.Host),
+			fmt.Sprintf(`--port=%v`, connectionOpts.Port),
+			fmt.Sprintf(`--username=%v`, connectionOpts.Username),
+			fmt.Sprintf(`--format=%v`, pgDumpDefaultFormat),
+		)
+		cmd = exec.Command(PGDumpCmd, options...)
+	} else if connectionOpts.DbType == "mariadb" {
+		mysqldumpCmd := "mysqldump"
+		if !commandExist(mysqldumpCmd) {
+			return ErrMySqlDumpNotFound
+		}
+
+		options := []string{
+			"-h", connectionOpts.Host,
+			"-P", strconv.Itoa(connectionOpts.Port),
+			"-u", connectionOpts.Username,
+			fmt.Sprintf(`--password=%s`, connectionOpts.Password),
+			"--databases", connectionOpts.Database,
+			"-r", outFile,
+		}
+		cmd = exec.Command(mysqldumpCmd, options...)
+	} else {
+		return errors.New("unsupported database type")
 	}
 
-	options := append(
-		pgDumpStdOpts,
-		fmt.Sprintf(`-f%s`, outFile),
-		fmt.Sprintf(`--dbname=%v`, pg.Database),
-		fmt.Sprintf(`--host=%v`, pg.Host),
-		fmt.Sprintf(`--port=%v`, pg.Port),
-		fmt.Sprintf(`--username=%v`, pg.Username),
-		fmt.Sprintf(`--format=%v`, pgDumpDefaultFormat),
-	)
-
-	cmd := exec.Command(PGDumpCmd, options...)
-	cmd.Env = append(os.Environ(), fmt.Sprintf(`PGPASSWORD=%v`, pg.Password))
+	cmd.Env = append(os.Environ(), fmt.Sprintf(`PGPASSWORD=%v`, connectionOpts.Password))
 
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
