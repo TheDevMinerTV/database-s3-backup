@@ -26,7 +26,6 @@ func main() {
 	s3Bucket := flag.String("s3-bucket", lookupEnvOrString("S3_BUCKET", "postgres-backups"), "S3 bucket")
 	s3AccessKey := flag.String("s3-access-key", lookupEnvOrString("S3_ACCESS_KEY", "minio"), "S3 access key")
 	s3SecretKey := flag.String("s3-secret-key", lookupEnvOrString("S3_SECRET_KEY", "minioadmin"), "S3 secret key")
-	dbType := flag.String("db-type", lookupEnvOrString("DB_TYPE", "postgres"), "Type of database: postgres or mariadb")
 
 	interval := flag.Duration("interval", lookupEnvOrDuration("INTERVAL", 24*time.Hour), "How often to run the backup")
 
@@ -64,7 +63,6 @@ func main() {
 			Database: strings.TrimPrefix(parsedUrl.Path, "/"),
 			Username: parsedUrl.User.Username(),
 			Password: password,
-			DbType:   *dbType,
 		}
 	}
 	if len(urls) == 0 {

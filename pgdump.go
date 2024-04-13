@@ -1,9 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 	"strconv"
@@ -16,78 +16,82 @@ type connectionOptions struct {
 	Database string
 	Username string
 	Password string
-	DbType   string
 }
 
 var (
 	PGDumpCmd           = "pg_dump"
 	pgDumpStdOpts       = []string{"--no-owner", "--no-acl", "--clean", "--blobs", "-v"}
 	pgDumpDefaultFormat = "c"
+	ErrPgDumpNotFound   = errors.New("pg_dump not found")
 
-	ErrPgDumpNotFound    = errors.New("pg_dump not found")
+	MysqlDumpCmd         = "mysqldump"
+	mysqlDumpStdOpts     = []string{"--compact", "--skip-add-drop-table", "--skip-add-locks", "--skip-disable-keys", "--skip-set-charset", "-v"}
 	ErrMySqlDumpNotFound = errors.New("mysqldump not found")
+
+	ErrUnsupportedType = errors.New("unsupported database type")
 )
 
 func RunDump(connectionOpts *connectionOptions, outFile string) error {
-	var cmd *exec.Cmd
-
-	if connectionOpts.DbType == "postgres" {
-		if !commandExist(PGDumpCmd) {
-			return ErrPgDumpNotFound
-		}
-
-		options := append(
-			pgDumpStdOpts,
-			fmt.Sprintf(`-f%s`, outFile),
-			fmt.Sprintf(`--dbname=%v`, connectionOpts.Database),
-			fmt.Sprintf(`--host=%v`, connectionOpts.Host),
-			fmt.Sprintf(`--port=%v`, connectionOpts.Port),
-			fmt.Sprintf(`--username=%v`, connectionOpts.Username),
-			fmt.Sprintf(`--format=%v`, pgDumpDefaultFormat),
-		)
-		cmd = exec.Command(PGDumpCmd, options...)
-	} else if connectionOpts.DbType == "mariadb" {
-		mysqldumpCmd := "mysqldump"
-		if !commandExist(mysqldumpCmd) {
-			return ErrMySqlDumpNotFound
-		}
-
-		options := []string{
-			"-h", connectionOpts.Host,
-			"-P", strconv.Itoa(connectionOpts.Port),
-			"-u", connectionOpts.Username,
-			fmt.Sprintf(`--password=%s`, connectionOpts.Password),
-			"--databases", connectionOpts.Database,
-			"-r", outFile,
-		}
-		cmd = exec.Command(mysqldumpCmd, options...)
-	} else {
-		return errors.New("unsupported database type")
-	}
-
-	cmd.Env = append(os.Environ(), fmt.Sprintf(`PGPASSWORD=%v`, connectionOpts.Password))
-
-	stderr, err := cmd.StderrPipe()
+	parsedUrl, err := url.Parse(connectionOpts.Host)
 	if err != nil {
 		return err
 	}
 
-	if err = cmd.Start(); err != nil {
+	cmd, err := buildDumpCommand(parsedUrl.Scheme, connectionOpts, outFile)
+	if err != nil {
 		return err
 	}
 
-	go func() {
-		scanner := bufio.NewScanner(stderr)
-		scanner.Split(bufio.ScanLines)
-		for scanner.Scan() {
-			fmt.Println(scanner.Text())
+	return executeCommand(cmd)
+}
+
+func buildDumpCommand(scheme string, opts *connectionOptions, outFile string) (*exec.Cmd, error) {
+	switch scheme {
+	case "postgres":
+		if !commandExist(PGDumpCmd) {
+			return nil, ErrPgDumpNotFound
 		}
-	}()
+		options := append(
+			pgDumpStdOpts,
+			fmt.Sprintf("-f%s", outFile),
+			fmt.Sprintf("--dbname=%s", opts.Database),
+			fmt.Sprintf("--host=%s", opts.Host),
+			fmt.Sprintf("--port=%d", opts.Port),
+			fmt.Sprintf("--username=%s", opts.Username),
+			fmt.Sprintf("--format=%s", pgDumpDefaultFormat),
+		)
+		return exec.Command(PGDumpCmd, options...), nil
 
-	if err = cmd.Wait(); err != nil {
+	case "mysql":
+		mysqldumpCmd := "mysqldump"
+		if !commandExist(mysqldumpCmd) {
+			return nil, ErrMySqlDumpNotFound
+		}
+		options := append(
+			mysqlDumpStdOpts,
+			"-h", opts.Host,
+			"-P", strconv.Itoa(opts.Port),
+			"-u", opts.Username,
+			fmt.Sprintf("--password=%s", opts.Password),
+			"--databases", opts.Database,
+			"-r", outFile,
+		)
+
+		return exec.Command(mysqldumpCmd, options...), nil
+
+	default:
+		return nil, ErrUnsupportedType
+	}
+}
+
+func executeCommand(cmd *exec.Cmd) error {
+	cmd.Env = append(os.Environ(), fmt.Sprintf("PGPASSWORD=%s", cmd.Args[9])) // Assumes password is at index 9
+	if err := cmd.Start(); err != nil {
 		return err
 	}
-
+	if err := cmd.Wait(); err != nil {
+		return err
+	}
 	return nil
 }
 
