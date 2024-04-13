@@ -107,6 +107,12 @@ func commandExist(command string) bool {
 	return err == nil
 }
 
-func newFileName(db string) string {
-	return fmt.Sprintf(`%v_%v.pgdump`, db, time.Now().Unix())
+func newFileName(db string, dbType string) string {
+	switch dbType {
+	case "postgres":
+		return fmt.Sprintf(`%v_%v.pgdump`, db, time.Now().Unix())
+	case "mysql":
+		return fmt.Sprintf(`%v_%v.sql`, db, time.Now().Unix())
+	}
+	return fmt.Sprintf(`%v_%v`, db, time.Now().Unix())
 }

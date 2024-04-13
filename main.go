@@ -81,7 +81,7 @@ func main() {
 	for {
 		for _, u := range urls {
 			log.Printf("Backing up %s", u.Database)
-			file := newFileName(u.Database)
+			file := newFileName(u.Database, u.DbType)
 
 			if err = RunDump(&u, file); err != nil {
 				log.Printf("WARNING: Failed to dump database: %s", err)
