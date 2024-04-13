@@ -1,10 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"net/url"
-	"os"
 	"os/exec"
 	"strconv"
 	"time"
@@ -85,10 +85,22 @@ func buildDumpCommand(scheme string, opts *connectionOptions, outFile string) (*
 }
 
 func executeCommand(cmd *exec.Cmd) error {
-	cmd.Env = append(os.Environ(), fmt.Sprintf("PGPASSWORD=%s", cmd.Args[9])) // Assumes password is at index 9
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return err
+	}
+
 	if err := cmd.Start(); err != nil {
 		return err
 	}
+
+	go func() {
+		scanner := bufio.NewScanner(stderr)
+		for scanner.Scan() {
+			fmt.Println(scanner.Text())
+		}
+	}()
+
 	if err := cmd.Wait(); err != nil {
 		return err
 	}
