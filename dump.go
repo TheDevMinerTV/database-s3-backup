@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"net/url"
 	"os/exec"
 	"strconv"
 	"time"
@@ -12,6 +11,7 @@ import (
 
 type connectionOptions struct {
 	Host     string
+	DbType   string
 	Port     int
 	Database string
 	Username string
@@ -32,12 +32,7 @@ var (
 )
 
 func RunDump(connectionOpts *connectionOptions, outFile string) error {
-	parsedUrl, err := url.Parse(connectionOpts.Host)
-	if err != nil {
-		return err
-	}
-
-	cmd, err := buildDumpCommand(parsedUrl.Scheme, connectionOpts, outFile)
+	cmd, err := buildDumpCommand(connectionOpts, outFile)
 	if err != nil {
 		return err
 	}
@@ -45,8 +40,8 @@ func RunDump(connectionOpts *connectionOptions, outFile string) error {
 	return executeCommand(cmd)
 }
 
-func buildDumpCommand(scheme string, opts *connectionOptions, outFile string) (*exec.Cmd, error) {
-	switch scheme {
+func buildDumpCommand(opts *connectionOptions, outFile string) (*exec.Cmd, error) {
+	switch opts.DbType {
 	case "postgres":
 		if !commandExist(PGDumpCmd) {
 			return nil, ErrPgDumpNotFound

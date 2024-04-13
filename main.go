@@ -43,7 +43,7 @@ func main() {
 			log.Fatalf("Failed to parse url %s: %s", rawUrl, err)
 		}
 
-		port := 5432
+		port := 0
 		rawPort := parsedUrl.Port()
 		if rawPort != "" {
 			port, err = strconv.Atoi(rawPort)
@@ -59,6 +59,7 @@ func main() {
 
 		urls[i] = connectionOptions{
 			Host:     parsedUrl.Hostname(),
+			DbType:   parsedUrl.Scheme,
 			Port:     port,
 			Database: strings.TrimPrefix(parsedUrl.Path, "/"),
 			Username: parsedUrl.User.Username(),
@@ -80,7 +81,6 @@ func main() {
 	for {
 		for _, u := range urls {
 			log.Printf("Backing up %s", u.Database)
-
 			file := newFileName(u.Database)
 
 			if err = RunDump(&u, file); err != nil {
