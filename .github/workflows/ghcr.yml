@@ -12,7 +12,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  FQDN: "ghcr.io/thedevminertv/postgres-s3-backup"
+  FQDN: "ghcr.io/thedevminertv/database-s3-backup"
 
 jobs:
   build:

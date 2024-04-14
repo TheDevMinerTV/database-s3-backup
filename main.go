@@ -3,15 +3,16 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/joho/godotenv"
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
 	"log"
 	"net/url"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/joho/godotenv"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 func main() {
@@ -42,7 +43,13 @@ func main() {
 			log.Fatalf("Failed to parse url %s: %s", rawUrl, err)
 		}
 
-		port := 5432
+		port := 0
+		switch parsedUrl.Scheme {
+		case "postgres":
+			port = 5432
+		case "mysql":
+			port = 3306
+		}
 		rawPort := parsedUrl.Port()
 		if rawPort != "" {
 			port, err = strconv.Atoi(rawPort)
@@ -58,6 +65,7 @@ func main() {
 
 		urls[i] = connectionOptions{
 			Host:     parsedUrl.Hostname(),
+			DbType:   parsedUrl.Scheme,
 			Port:     port,
 			Database: strings.TrimPrefix(parsedUrl.Path, "/"),
 			Username: parsedUrl.User.Username(),
@@ -79,8 +87,7 @@ func main() {
 	for {
 		for _, u := range urls {
 			log.Printf("Backing up %s", u.Database)
-
-			file := newFileName(u.Database)
+			file := newFileName(u.Database, u.DbType)
 
 			if err = RunDump(&u, file); err != nil {
 				log.Printf("WARNING: Failed to dump database: %s", err)

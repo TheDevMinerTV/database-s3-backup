@@ -1,11 +1,11 @@
-# PostgreSQL Backup to S3 with Docker
+# Database Backup to S3 with Docker
 
-This application automates the process of backing up PostgreSQL databases and uploading them to an S3-compatible storage service, utilizing Docker for easy deployment and scheduling.
+This application automates the process of backing up PostgreSQL and MySQL databases and uploading them to an S3-compatible storage service, utilizing Docker for easy deployment and scheduling.
 
 ## Features
 
 - Easy deployment with Docker and Docker Compose.
-- Support for multiple PostgreSQL databases.
+- Support for multiple PostgreSQL and MySQL databases.
 - Customizable backup intervals.
 - Direct upload of backups to an S3-compatible storage bucket.
 - Environment variable and command-line configuration for flexibility.
@@ -14,7 +14,7 @@ This application automates the process of backing up PostgreSQL databases and up
 ## Prerequisites
 
 - Docker and Docker Compose installed on your system.
-- Access to a PostgreSQL database.
+- Access to PostgreSQL and/or MySQL databases.
 - Access to an S3-compatible storage service.
 
 ## Configuration
@@ -25,7 +25,7 @@ Before running the application, you need to configure it either by setting envir
 
 Create a `.env` file in the project directory with the following variables:
 
-- `URLS`: Comma-separated list of PostgreSQL database URLs to backup. Format: `postgres://<user>:<password>@<host>[:<port>]/<dbname>`
+- `URLS`: Comma-separated list of database URLs to backup. Format for PostgreSQL: `postgres://<user>:<password>@<host>[:<port>]/<dbname>` and for MySQL: `mysql://<user>:<password>@<host>[:<port>]/<dbname>`
 - `S3_ENDPOINT`: The endpoint URL of your S3-compatible storage service.
 - `S3_BUCKET`: The name of the bucket where backups will be stored.
 - `S3_ACCESS_KEY`: Your S3 access key.
@@ -41,7 +41,7 @@ services:
   app:
     build: .
     environment:
-      URLS: "postgres://user:password@host:port/dbname"
+      URLS: "postgres://user:password@host:port/dbname,mysql://user:password@host:port/dbname"
       S3_ENDPOINT: "your_s3_endpoint"
       S3_BUCKET: "your_s3_bucket"
       S3_ACCESS_KEY: "your_s3_access_key"
@@ -51,7 +51,7 @@ services:
 
 ## Running the Application with Docker
 
-There is an image available on `ghcr.io/thedevminertv/postgres_s3_backup` that you can use.
+There is an image available on `ghcr.io/thedevminertv/database-s3-backup` that you can use.
 
 Alternatively, you can build the image yourself:
 
@@ -67,7 +67,7 @@ Alternatively, you can build the image yourself:
    docker compose up -d
    ```
 
-This will start the application in the background. It will automatically perform backups based on the configured interval and upload them to the specified S3 bucket.
+This will start the application in the background. It will automatically perform backups for both PostgreSQL and MySQL databases based on the configured interval and upload them to the specified S3 bucket.
 
 ## Monitoring and Logs
 
