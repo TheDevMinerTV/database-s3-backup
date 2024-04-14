@@ -51,7 +51,7 @@ services:
 
 ## Running the Application with Docker
 
-There is an image available on `ghcr.io/thedevminertv/database_s3_backup` that you can use.
+There is an image available on `ghcr.io/thedevminertv/database-s3-backup` that you can use.
 
 Alternatively, you can build the image yourself:
 
