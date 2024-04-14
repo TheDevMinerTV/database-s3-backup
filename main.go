@@ -44,6 +44,12 @@ func main() {
 		}
 
 		port := 0
+		switch parsedUrl.Scheme {
+		case "postgres":
+			port = 5432
+		case "mysql":
+			port = 3306
+		}
 		rawPort := parsedUrl.Port()
 		if rawPort != "" {
 			port, err = strconv.Atoi(rawPort)
