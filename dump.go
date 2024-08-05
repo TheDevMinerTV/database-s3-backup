@@ -1,9 +1,10 @@
 package main
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
+	"io"
+	"os"
 	"os/exec"
 	"strconv"
 	"time"
@@ -85,16 +86,17 @@ func executeCommand(cmd *exec.Cmd) error {
 		return err
 	}
 
-	if err := cmd.Start(); err != nil {
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
 		return err
 	}
 
-	go func() {
-		scanner := bufio.NewScanner(stderr)
-		for scanner.Scan() {
-			fmt.Println(scanner.Text())
-		}
-	}()
+	go io.Copy(os.Stderr, stderr)
+	go io.Copy(os.Stdout, stdout)
+
+	if err := cmd.Start(); err != nil {
+		return err
+	}
 
 	if err := cmd.Wait(); err != nil {
 		return err
