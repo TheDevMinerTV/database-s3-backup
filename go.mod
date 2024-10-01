@@ -2,7 +2,7 @@ module github.com/TheDevMinerTV/postgres_s3_backup
 
 go 1.21
 
-toolchain go1.22.5
+toolchain go1.23.2
 
 require (
 	github.com/joho/godotenv v1.5.1
