@@ -29,16 +29,29 @@ var (
 	mysqlDumpStdOpts     = []string{"--compact", "--skip-add-drop-table", "--skip-add-locks", "--skip-disable-keys", "--skip-set-charset", "-v"}
 	ErrMySqlDumpNotFound = errors.New("mysqldump not found")
 
+	CompressCmd         = "zstd"
+	compressStdOpts     = []string{"--rm", "--no-progress", "--rsyncable", "-T0", "-11"}
+	ErrCompressNotFound = errors.New("zstd not found")
+
 	ErrUnsupportedType = errors.New("unsupported database type")
 )
 
-func RunDump(connectionOpts *connectionOptions, outFile string) error {
-	cmd, err := buildDumpCommand(connectionOpts, outFile)
+func RunDump(connectionOpts *connectionOptions) (string, error) {
+	dumpFile := newFileName(connectionOpts.Database, connectionOpts.DbType, false)
+	cmd, err := buildDumpCommand(connectionOpts, dumpFile)
 	if err != nil {
-		return err
+		return "", err
+	}
+	if err = executeCommand(cmd); err != nil {
+		return "", err
 	}
 
-	return executeCommand(cmd)
+	outFile := newFileName(connectionOpts.Database, connectionOpts.DbType, true)
+	cmd, err = buildCompressCommand(dumpFile, outFile)
+	if err != nil {
+		return "", err
+	}
+	return outFile, executeCommand(cmd)
 }
 
 func buildDumpCommand(opts *connectionOptions, outFile string) (*exec.Cmd, error) {
@@ -80,6 +93,19 @@ func buildDumpCommand(opts *connectionOptions, outFile string) (*exec.Cmd, error
 	}
 }
 
+func buildCompressCommand(inFile string, outFile string) (*exec.Cmd, error) {
+	if !commandExist(CompressCmd) {
+		return nil, ErrCompressNotFound
+	}
+	options := append(
+		compressStdOpts,
+		inFile,
+		"-o",
+		outFile,
+	)
+	return exec.Command(CompressCmd, options...), nil
+}
+
 func executeCommand(cmd *exec.Cmd) error {
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
@@ -109,12 +135,19 @@ func commandExist(command string) bool {
 	return err == nil
 }
 
-func newFileName(db string, dbType string) string {
+func newFileName(db string, dbType string, compress bool) string {
+	ext := ""
+
 	switch dbType {
 	case "postgres":
-		return fmt.Sprintf(`%v_%v.pgdump`, db, time.Now().Unix())
+		ext = ".pgdump"
 	case "mysql":
-		return fmt.Sprintf(`%v_%v.sql`, db, time.Now().Unix())
+		ext = ".sql"
 	}
-	return fmt.Sprintf(`%v_%v`, db, time.Now().Unix())
+
+	if compress {
+		ext = fmt.Sprintf("%s.zst", ext)
+	}
+
+	return fmt.Sprintf(`%v_%v%s`, db, time.Now().Unix(), ext)
 }
