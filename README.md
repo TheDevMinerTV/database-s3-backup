@@ -31,6 +31,7 @@ Create a `.env` file in the project directory with the following variables:
 - `S3_ACCESS_KEY`: Your S3 access key.
 - `S3_SECRET_KEY`: Your S3 secret key.
 - `INTERVAL`: How often to run the backup (e.g., `24h` for daily backups).
+- `COMPRESS`: If the dump should not be compressed with [`zstd`](https://en.wikipedia.org/wiki/Zstd), set this to `0`, `false` or `no`.
 
 ### Docker Compose
 

@@ -59,8 +59,7 @@ func buildDumpCommand(opts *connectionOptions, outFile string) (*exec.Cmd, error
 		return exec.Command(PGDumpCmd, options...), nil
 
 	case "mysql":
-		mysqldumpCmd := "mysqldump"
-		if !commandExist(mysqldumpCmd) {
+		if !commandExist(MysqlDumpCmd) {
 			return nil, ErrMySqlDumpNotFound
 		}
 		options := append(
@@ -73,7 +72,7 @@ func buildDumpCommand(opts *connectionOptions, outFile string) (*exec.Cmd, error
 			"-r", outFile,
 		)
 
-		return exec.Command(mysqldumpCmd, options...), nil
+		return exec.Command(MysqlDumpCmd, options...), nil
 
 	default:
 		return nil, ErrUnsupportedType

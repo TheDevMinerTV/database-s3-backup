@@ -28,6 +28,7 @@ func main() {
 	s3SecretKey := flag.String("s3-secret-key", lookupEnvOrString("S3_SECRET_KEY", "minioadmin"), "S3 secret key")
 
 	interval := flag.Duration("interval", lookupEnvOrDuration("INTERVAL", 24*time.Hour), "How often to run the backup")
+	compressionEnabled := flag.Bool("compress", lookupEnvOrBool("COMPRESS", false), "compress database dump with zstd")
 
 	flag.Parse()
 
@@ -86,16 +87,31 @@ func main() {
 
 	for {
 		for _, u := range urls {
-			log.Printf("Backing up %s", u.Database)
 			file := newFileName(u.Database, u.DbType)
 
+			log.Printf("Backing up %s", u.Database)
 			if err = RunDump(&u, file); err != nil {
 				log.Printf("WARNING: Failed to dump database: %s", err)
 				continue
 			}
 
-			log.Printf("Uploading %s to %s", file, *s3Bucket)
+			if *compressionEnabled {
+				log.Printf("Compressing %s", file)
+				compressedFile, err := CompressFile(file)
+				if err != nil {
+					log.Printf("WARNING: Failed to compress file: %s", err)
+					continue
+				}
 
+				log.Printf("Removing %s", file)
+				if err := os.Remove(file); err != nil {
+					log.Printf("WARNING: Failed to remove %s: %s", file, err)
+					continue
+				}
+				file = compressedFile
+			}
+
+			log.Printf("Uploading %s to %s", file, *s3Bucket)
 			if _, err := s3.FPutObject(context.Background(), *s3Bucket, file, file, minio.PutObjectOptions{}); err != nil {
 				log.Printf("WARNING: Failed to upload %s to %s: %s", file, *s3Bucket, err)
 				continue
@@ -113,6 +129,22 @@ func main() {
 		log.Printf("Sleeping for %s", *interval)
 		time.Sleep(*interval)
 	}
+}
+
+func lookupEnvOrBool(key string, defaultVal bool) bool {
+	if val, ok := os.LookupEnv(key); ok {
+		switch strings.ToLower(val) {
+		case "false":
+			return false
+		case "no":
+			return false
+		case "0":
+			return false
+		default:
+			return true
+		}
+	}
+	return defaultVal
 }
 
 func lookupEnvOrString(key string, defaultVal string) string {
