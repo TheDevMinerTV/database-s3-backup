@@ -16,7 +16,7 @@ func CompressFile(inFile string) (string, error) {
 	defer in.Close()
 
 	outFile := fmt.Sprintf("%s.zst", inFile)
-	out, err := os.OpenFile(outFile, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	out, err := os.OpenFile(outFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		return "", err
 	}
