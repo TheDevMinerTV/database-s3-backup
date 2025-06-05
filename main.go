@@ -86,24 +86,36 @@ func main() {
 
 	for {
 		for _, u := range urls {
-			log.Printf("Backing up %s", u.Database)
-			file := newFileName(u.Database, u.DbType)
+			dumpFile := newFileName(u.Database, u.DbType)
 
-			if err = RunDump(&u, file); err != nil {
+			log.Printf("Backing up %s", u.Database)
+			if err = RunDump(&u, dumpFile); err != nil {
 				log.Printf("WARNING: Failed to dump database: %s", err)
 				continue
 			}
 
-			log.Printf("Uploading %s to %s", file, *s3Bucket)
-
-			if _, err := s3.FPutObject(context.Background(), *s3Bucket, file, file, minio.PutObjectOptions{}); err != nil {
-				log.Printf("WARNING: Failed to upload %s to %s: %s", file, *s3Bucket, err)
+			log.Printf("Compressing %s", dumpFile)
+			compressedFile, err := CompressFile(dumpFile)
+			if err != nil {
+				log.Printf("WARNING: Failed to compress file: %s", err)
 				continue
 			}
 
-			log.Printf("Removing %s", file)
-			if err := os.Remove(file); err != nil {
-				log.Printf("WARNING: Failed to remove %s: %s", file, err)
+			log.Printf("Removing %s", dumpFile)
+			if err := os.Remove(dumpFile); err != nil {
+				log.Printf("WARNING: Failed to remove %s: %s", dumpFile, err)
+				continue
+			}
+
+			log.Printf("Uploading %s to %s", compressedFile, *s3Bucket)
+			if _, err := s3.FPutObject(context.Background(), *s3Bucket, compressedFile, compressedFile, minio.PutObjectOptions{}); err != nil {
+				log.Printf("WARNING: Failed to upload %s to %s: %s", compressedFile, *s3Bucket, err)
+				continue
+			}
+
+			log.Printf("Removing %s", compressedFile)
+			if err := os.Remove(compressedFile); err != nil {
+				log.Printf("WARNING: Failed to remove %s: %s", compressedFile, err)
 				continue
 			}
 
