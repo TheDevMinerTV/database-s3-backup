@@ -1,12 +1,12 @@
 module github.com/TheDevMinerTV/postgres_s3_backup
 
-go 1.23.0
+go 1.24
 
 toolchain go1.24.4
 
 require (
 	github.com/joho/godotenv v1.5.1
-	github.com/klauspost/compress v1.18.0
+	github.com/klauspost/compress v1.18.6
 	github.com/minio/minio-go/v7 v7.0.92
 )
 
