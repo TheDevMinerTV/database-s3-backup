@@ -25,7 +25,7 @@ Before running the application, you need to configure it either by setting envir
 
 Create a `.env` file in the project directory with the following variables:
 
-- `URLS`: Comma-separated list of database URLs to backup. Format for PostgreSQL: `postgres://<user>:<password>@<host>[:<port>]/<dbname>` and for MySQL: `mysql://<user>:<password>@<host>[:<port>]/<dbname>`
+- `URLS`: Comma-separated list of database URLs to backup. Format for PostgreSQL: `postgres://<user>:<password>@<host>[:<port>]/<dbname>`, for MySQL: `mysql://<user>:<password>@<host>[:<port>]/<dbname>`, for MariaDB: `mariadb://<user>:<password>@<host>[:<port>]/<dbname>`
 - `S3_ENDPOINT`: The endpoint URL of your S3-compatible storage service.
 - `S3_BUCKET`: The name of the bucket where backups will be stored.
 - `S3_ACCESS_KEY`: Your S3 access key.

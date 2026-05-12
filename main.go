@@ -49,7 +49,7 @@ func main() {
 		switch parsedUrl.Scheme {
 		case "postgres":
 			port = 5432
-		case "mysql":
+		case "mysql", "mariadb":
 			port = 3306
 		}
 		rawPort := parsedUrl.Port()

@@ -61,7 +61,7 @@ func buildDumpCommand(opts *connectionOptions, outFile string) (*exec.Cmd, error
 		cmd.Env = append(os.Environ(), "PGPASSWORD="+opts.Password)
 		return cmd, nil
 
-	case "mysql":
+	case "mysql", "mariadb":
 		dumpCmd := MariadbDumpCmd
 		if !commandExist(dumpCmd) {
 			dumpCmd = MysqlDumpCmd
@@ -119,7 +119,7 @@ func newFileName(db string, dbType string) string {
 	switch dbType {
 	case "postgres":
 		return fmt.Sprintf(`%v_%v.pgdump`, db, time.Now().Unix())
-	case "mysql":
+	case "mysql", "mariadb":
 		return fmt.Sprintf(`%v_%v.sql`, db, time.Now().Unix())
 	}
 	return fmt.Sprintf(`%v_%v`, db, time.Now().Unix())
