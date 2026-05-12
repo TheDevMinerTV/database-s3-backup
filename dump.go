@@ -26,6 +26,7 @@ var (
 	ErrPgDumpNotFound   = errors.New("pg_dump not found")
 
 	MysqlDumpCmd         = "mysqldump"
+	MariadbDumpCmd       = "mariadb-dump"
 	mysqlDumpStdOpts     = []string{"--compact", "--skip-add-drop-table", "--skip-add-locks", "--skip-disable-keys", "--skip-set-charset", "-v"}
 	ErrMySqlDumpNotFound = errors.New("mysqldump not found")
 
@@ -61,8 +62,12 @@ func buildDumpCommand(opts *connectionOptions, outFile string) (*exec.Cmd, error
 		return cmd, nil
 
 	case "mysql":
-		if !commandExist(MysqlDumpCmd) {
-			return nil, ErrMySqlDumpNotFound
+		dumpCmd := MariadbDumpCmd
+		if !commandExist(dumpCmd) {
+			dumpCmd = MysqlDumpCmd
+			if !commandExist(dumpCmd) {
+				return nil, ErrMySqlDumpNotFound
+			}
 		}
 		options := append(
 			mysqlDumpStdOpts,
@@ -74,7 +79,7 @@ func buildDumpCommand(opts *connectionOptions, outFile string) (*exec.Cmd, error
 			"-r", outFile,
 		)
 
-		return exec.Command(MysqlDumpCmd, options...), nil
+		return exec.Command(dumpCmd, options...), nil
 
 	default:
 		return nil, ErrUnsupportedType
