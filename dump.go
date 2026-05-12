@@ -56,7 +56,9 @@ func buildDumpCommand(opts *connectionOptions, outFile string) (*exec.Cmd, error
 			fmt.Sprintf("--username=%s", opts.Username),
 			fmt.Sprintf("--format=%s", pgDumpDefaultFormat),
 		)
-		return exec.Command(PGDumpCmd, options...), nil
+		cmd := exec.Command(PGDumpCmd, options...)
+		cmd.Env = append(os.Environ(), "PGPASSWORD="+opts.Password)
+		return cmd, nil
 
 	case "mysql":
 		if !commandExist(MysqlDumpCmd) {
