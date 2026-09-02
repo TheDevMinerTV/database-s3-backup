@@ -6,7 +6,7 @@ toolchain go1.26.3
 
 require (
 	github.com/joho/godotenv v1.5.1
-	github.com/klauspost/compress v1.18.6
+	github.com/klauspost/compress v1.20.0
 	github.com/minio/minio-go/v7 v7.1.0
 )
 
